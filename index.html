@@ -44,12 +44,21 @@ const sortOptions = document.getElementById('sortOptions');
 const darkModeToggle = document.getElementById('darkModeToggle');
 
 const zonesURL = "https://cdn.jsdelivr.net/gh/newtryer7w537r63/dis-ski.github.io@testing/files.json";
+const htmlBaseURL = "https://cdn.jsdelivr.net/gh/gn-math/html@main/";
 let zones = [];
 
 async function listZones() {
   try {
     const response = await fetch(zonesURL);
     zones = await response.json();
+
+    // Replace placeholder in URLs
+    zones.forEach(z => {
+      if(z.url.includes("{HTML_URL}")) {
+        z.url = z.url.replace("{HTML_URL}", htmlBaseURL);
+      }
+    });
+
     displayZones(zones);
   } catch (e) {
     container.innerHTML = "Error loading zones: " + e;
