@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Gateway</title>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background:#f0f0f0; }
+  body.dark-mode { background:#111; color:#eee; }
+  #controls { padding:10px; display:flex; gap:10px; align-items:center; }
+  #container { display:flex; flex-wrap:wrap; gap:10px; padding:10px; }
+  .zone-item { width:150px; border:1px solid #ccc; padding:5px; cursor:pointer; background:#fff; }
+  .zone-item img { width:100%; height:100px; object-fit:cover; }
+  .zone-item button { width:100%; margin-top:5px; }
+  #zoneViewer { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; }
+  #zoneViewer iframe { width:100%; height:100%; border:none; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <input type="text" id="searchBar" placeholder="Search zones..." />
+  <select id="sortOptions">
+    <option value="name">Name</option>
+    <option value="id">ID</option>
+    <option value="popular">Popularity</option>
+  </select>
+  <button id="darkModeToggle">Dark Mode</button>
+  <span id="zoneCount"></span>
+</div>
+
+<div id="container"></div>
+
+<div id="zoneViewer">
+  <iframe id="zoneFrame"></iframe>
+</div>
+
+<script>
+const container = document.getElementById('container');
+const zoneViewer = document.getElementById('zoneViewer');
+const zoneFrame = document.getElementById('zoneFrame');
+const searchBar = document.getElementById('searchBar');
+const sortOptions = document.getElementById('sortOptions');
+const darkModeToggle = document.getElementById('darkModeToggle');
+
+const zonesURL = "https://cdn.jsdelivr.net/gh/newtryer7w537r63/dis-ski.github.io@testing/files.json";
+let zones = [];
+
+async function listZones() {
+  try {
+    const response = await fetch(zonesURL);
+    zones = await response.json();
+    displayZones(zones);
+  } catch (e) {
+    container.innerHTML = "Error loading zones: " + e;
+  }
+}
+
+function displayZones(list) {
+  container.innerHTML = "";
+  list.forEach(zone => {
+    const item = document.createElement("div");
+    item.className = "zone-item";
+    item.onclick = () => openZone(zone);
+
+    const img = document.createElement("img");
+    img.src = zone.cover;
+    item.appendChild(img);
+
+    const button = document.createElement("button");
+    button.textContent = zone.name;
+    button.onclick = (e) => { e.stopPropagation(); openZone(zone); };
+    item.appendChild(button);
+
+    container.appendChild(item);
+  });
+  document.getElementById("zoneCount").textContent = `Zones Loaded: ${list.length}`;
+}
+
+function openZone(zone) {
+  zoneFrame.src = zone.url;
+  zoneViewer.style.display = "block";
+  zoneFrame.focus();
+}
+
+searchBar.addEventListener('input', () => {
+  const query = searchBar.value.toLowerCase();
+  const filtered = zones.filter(z => z.name.toLowerCase().includes(query));
+  displayZones(filtered);
+});
+
+sortOptions.addEventListener('change', () => {
+  const val = sortOptions.value;
+  let sorted = [...zones];
+  if (val === "name") sorted.sort((a,b)=>a.name.localeCompare(b.name));
+  else if (val === "id") sorted.sort((a,b)=>a.id-b.id);
+  displayZones(sorted);
+});
+
+darkModeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+});
+
+// Close zone on ESC
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') zoneViewer.style.display = 'none';
+});
+
+listZones();
+</script>
+
+</body>
+</html>
